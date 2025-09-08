@@ -9,5 +9,5 @@
 
 ## Task 4
 ###
-4a: {'Max Reward: -7415.0, Average Reward: -7464.49, Standard Deviation: 28.84908837381175'}
+4a: {'Max Reward: -5.692375339319136, Average Reward: -6.690034656187877, Standard Deviation: 0.4529444531541443'}
 4b: 

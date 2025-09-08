@@ -7,13 +7,14 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from joblib import load, dump
 import pandas as pd
-from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
+from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo, TimeLimit
+import random
 
 #number of episodes
 m = 100
 
 render_mode = 'rgb_array' #or, 'human'
-env = gym.make("Acrobot-v1", render_mode=render_mode)
+env = gym.make("MountainCarContinuous-v0", render_mode = render_mode, goal_velocity=0.1)
 
 # Video directory
 try:
@@ -21,12 +22,13 @@ try:
 except:
     pass
 
+
 # Add video recording for every episode
 env = RecordVideo(
     env,
     video_folder="video",    # Folder to save videos
-    name_prefix="deterministicAcrobot",               # Prefix for video filenames
-    episode_trigger=lambda x: True    # Record every episode
+    name_prefix="deterministicMountainCar",               # Prefix for video filenames
+    episode_trigger=lambda x: x < m    # Record every episode
 )
 
 # Add episode statistics tracking
@@ -35,34 +37,41 @@ env = RecordEpisodeStatistics(env, buffer_length=m)
 #Here below, we created the environment and initialized few variables.
 total_reward = 0.0
 total_steps = 0
-observation, info = env.reset(seed=123)
+observation, info = env.reset()
 
+episode_rewards = []
 
 episode = 1
 for _ in tqdm(range(m)):
+    observation, info = env.reset()
+    total_reward = 0
     step = 0
     terminated = False
-    x = 2
-    while not terminated:
+    truncated = False
+    while not (terminated or truncated):
 
-        action = x
+        if observation[1] < 0:
+            action = [-1.0]
+        elif observation[1] >= 0:
+            action = [1.0]
         observation, reward, terminated, truncated, info = env.step(action)
         step += 1
         total_reward += reward
         total_steps += 1
-        x = 2 - x
 
-        if terminated:
+        if terminated or truncated or step >= 200:
+            print(f"Episode {episode} ended at step {step}")
+            print(f"Terminated: {terminated}, Truncated: {truncated}")
+            print(f"Final position: {observation[0]}")
+            print(f"Total reward: {total_reward}")
+            episode_rewards.append(total_reward)
             episode += 1
             step = 0
-            total_reward = 0
-            observation, info = env.reset()
-            #break
 
 env.close()
 
 # Metrics
-max = np.max(env.return_queue)
-mean = np.mean(env.return_queue)
-std = np.std(env.return_queue)
+max = np.max(episode_rewards)
+mean = np.mean(episode_rewards)
+std = np.std(episode_rewards)
 print({f"Max Reward: {max}, Average Reward: {mean}, Standard Deviation: {std}"})

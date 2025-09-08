@@ -7,13 +7,13 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from joblib import load, dump
 import pandas as pd
-from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
+from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo, TimeLimit
 
 #number of episodes
 m = 100
 
 render_mode = 'rgb_array' #or, 'human'
-env = gym.make("Acrobot-v1", render_mode=render_mode)
+env = gym.make("MountainCarContinuous-v0", render_mode = render_mode, goal_velocity=0.1)
 
 # Video directory
 try:
@@ -21,12 +21,14 @@ try:
 except:
     pass
 
+env = TimeLimit(env, max_episode_steps=200)  # Limit episodes to 200 steps
+
 # Add video recording for every episode
 env = RecordVideo(
     env,
     video_folder="video",    # Folder to save videos
-    name_prefix="randomAcrobot",               # Prefix for video filenames
-    episode_trigger=lambda x: True    # Record every episode
+    name_prefix="randomMountainCar",               # Prefix for video filenames
+    episode_trigger=lambda x: x < m,    # Record every episode
 )
 
 # Add episode statistics tracking
@@ -42,7 +44,8 @@ episode = 1
 for _ in tqdm(range(m)):
     step = 0
     terminated = False
-    while not terminated:
+    truncated = False
+    while not (terminated or truncated):
 
         action = env.action_space.sample()
         observation, reward, terminated, truncated, info = env.step(action)
@@ -50,7 +53,7 @@ for _ in tqdm(range(m)):
         total_reward += reward
         total_steps += 1
 
-        if terminated:
+        if terminated or truncated:
             episode += 1
             step = 0
             total_reward = 0
