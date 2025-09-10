@@ -21,7 +21,8 @@ try:
 except:
     pass
 
-env = TimeLimit(env, max_episode_steps=200)  # Limit episodes to 200 steps
+# Limit episodes to 200 steps
+env = TimeLimit(env, max_episode_steps=200)
 
 # Add video recording for every episode
 env = RecordVideo(
@@ -42,6 +43,8 @@ observation, info = env.reset(seed=123)
 
 episode = 1
 for _ in tqdm(range(m)):
+    observation, info = env.reset()
+    total_reward = 0
     step = 0
     terminated = False
     truncated = False
@@ -56,9 +59,6 @@ for _ in tqdm(range(m)):
         if terminated or truncated:
             episode += 1
             step = 0
-            total_reward = 0
-            observation, info = env.reset()
-            #break
 
 env.close()
 
